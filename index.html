@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Зачем перемешивать ответы?</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .presentation {
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        .slide {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            height: 620px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: fadeIn 0.4s;
+            overflow: hidden;
+        }
+
+        .slide.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            font-size: 1.7em;
+            margin-bottom: 12px;
+        }
+
+        h2 {
+            color: #764ba2;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .slide-counter {
+            text-align: center;
+            color: white;
+            font-size: 1.1em;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .nav-btn {
+            padding: 10px 28px;
+            font-size: 1em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-weight: bold;
+        }
+
+        .nav-btn:hover { transform: scale(1.05); }
+        .nav-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .content-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+
+        .array-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 12px 0;
+        }
+
+        .array-labels {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+            justify-content: center;
+        }
+
+        .array-label {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.85em;
+            min-width: 90px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .array-label.active-label {
+            background: #f44336;
+            transform: scale(1.1);
+        }
+
+        .array-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .array-item {
+            padding: 14px 18px;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: bold;
+            transition: all 0.5s;
+            min-width: 95px;
+            text-align: center;
+        }
+
+        .array-item.correct {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+
+        .array-item.wrong {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+
+        .array-item.highlight {
+            transform: scale(1.15);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .array-item.question-mark {
+            background: #e0e0e0;
+            border-style: dashed;
+            color: #999;
+        }
+
+        .shuffle-button {
+            display: block;
+            margin: 12px auto;
+            padding: 10px 30px;
+            font-size: 1em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .shuffle-button:hover { transform: scale(1.05); }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 18px;
+            border-radius: 10px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 1.8;
+            margin: 10px 0;
+            overflow-x: auto;
+            white-space: pre;
+            tab-size: 4;
+        }
+
+        .code-comment { color: #6a9955; }
+        .code-keyword { color: #569cd6; }
+        .code-function { color: #dcdcaa; }
+        .code-string { color: #ce9178; }
+        .code-variable { color: #9cdcfe; }
+
+        .problem-box {
+            background: #ffebee;
+            border-left: 5px solid #f44336;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .solution-box {
+            background: #e8f5e9;
+            border-left: 5px solid #4caf50;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .step {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 8px 0;
+            border-left: 4px solid #667eea;
+            font-size: 0.95em;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 26px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 12px 0;
+        }
+
+        .demo-container {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+            margin: 12px 0;
+        }
+
+        .demo-column {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+        }
+
+        .demo-title {
+            text-align: center;
+            font-size: 1em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .highlight-text {
+            background: yellow;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        p { font-size: 0.95em; line-height: 1.5; }
+        ul { margin-left: 20px; font-size: 0.95em; line-height: 1.6; }
+
+        .status-line {
+            text-align: center;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.95em;
+            color: #764ba2;
+            background: #f0f0f0;
+            padding: 8px;
+            border-radius: 5px;
+            margin: 10px 0;
+            min-height: 35px;
+        }
+
+        /* === Слайд 4 в общем стиле === */
+        .example-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .question-text {
+            font-size: 1.15em;
+            font-weight: bold;
+            color: #764ba2;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .screen-label {
+            text-align: center;
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+            margin-bottom: 2px;
+        }
+
+        .array-list {
+            text-align: center;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.95em;
+            color: #764ba2;
+            background: #f0f0f0;
+            padding: 8px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .arrow-connector {
+            text-align: center;
+            font-size: 1.3em;
+            color: #667eea;
+            margin: 5px 0;
+        }
+
+        /* На слайде 4 неправильные ответы — серые, чтобы не сливались с красной меткой ans[0] */
+        .example-section .array-item.wrong {
+            background: #9e9e9e;
+            border-color: #9e9e9e;
+            color: white;
+        }
+
+        /* Радиокнопки в два ряда */
+        .physical-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 16px;
+            justify-content: center;
+            max-width: 320px;
+            margin: 8px auto;
+        }
+
+        .physical-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 25px;
+            font-size: 0.9em;
+            font-weight: bold;
+            min-width: 120px;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .physical-btn::before {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #667eea;
+            background: white;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .physical-btn.active-phys {
+            background: #4caf50;
+            border-color: #4caf50;
+            color: white;
+        }
+
+        .physical-btn.active-phys::before {
+            border-color: white;
+            background: white;
+            box-shadow: inset 0 0 0 3px #4caf50;
+        }
+
+        .physical-btn.active-phys span {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+        <div class="slide-counter">Слайд <span id="current-slide">1</span> из 6</div>
+
+        <!-- Слайд 1: Введение -->
+        <div class="slide active" id="slide-1">
+            <h1>🎯 Зачем перемешивать ответы?</h1>
+            
+            <div class="content-box">
+                <div class="problem-box">
+                    <p><strong>😱 Проблема:</strong> Ученик не читает вопросы, а нажимает <strong>всегда одну кнопку</strong> и получает 100%!</p>
+                </div>
+            </div>
+
+            <div class="array-visual">
+                <div class="array-labels">
+                    <div class="array-label">ans[0]</div>
+                    <div class="array-label">ans[1]</div>
+                    <div class="array-label">ans[2]</div>
+                    <div class="array-label">ans[3]</div>
+                </div>
+                <div class="array-buttons">
+                    <div class="array-item correct">4 ✓</div>
+                    <div class="array-item">3</div>
+                    <div class="array-item">2</div>
+                    <div class="array-item">1</div>
+                </div>
+            </div>
+            
+            <p style="text-align: center; font-size: 1em; color: #f44336;">
+                <strong>Правильный ответ ВСЕГДА на позиции ans[0]!</strong>
+            </p>
+
+            <div class="step">
+                <span class="step-number">❓</span>
+                <strong>Как исправить?</strong> — Нужно перемешивать кнопки!
+            </div>
+        </div>
+
+        <!-- Слайд 2: Проблема -->
+        <div class="slide" id="slide-2">
+            <h1>❌ Без перемешивания</h1>
+            
+            <div class="comparison-grid">
+                <div class="problem-box">
+                    <h2>Вопрос 1: 2+2=?</h2>
+                    <div class="array-labels">
+                        <div class="array-label">ans[0]</div>
+                        <div class="array-label">ans[1]</div>
+                        <div class="array-label">ans[2]</div>
+                        <div class="array-label">ans[3]</div>
+                    </div>
+                    <div class="array-buttons">
+                        <div class="array-item correct">4 ✓</div>
+                        <div class="array-item">3</div>
+                        <div class="array-item">2</div>
+                        <div class="array-item">1</div>
+                    </div>
+                </div>
+                
+                <div class="problem-box">
+                    <h2>Вопрос 2: 3+3=?</h2>
+                    <div class="array-labels">
+                        <div class="array-label">ans[0]</div>
+                        <div class="array-label">ans[1]</div>
+                        <div class="array-label">ans[2]</div>
+                        <div class="array-label">ans[3]</div>
+                    </div>
+                    <div class="array-buttons">
+                        <div class="array-item correct">6 ✓</div>
+                        <div class="array-item">5</div>
+                        <div class="array-item">7</div>
+                        <div class="array-item">4</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="problem-box" style="text-align: center;">
+                <p><strong>🎯 Вывод:</strong> Ученик запоминает: <span class="highlight-text">"Всегда жми ans[0]!"</span></p>
+            </div>
+        </div>
+
+        <!-- Слайд 3: Решение с анимацией -->
+        <div class="slide" id="slide-3">
+            <h1>✅ Решение: Перемешивание!</h1>
+            
+            <div class="solution-box">
+                <p><strong>Идея:</strong> Перемешаем массив кнопок, затем запишем правильный ответ в ans[0]</p>
+            </div>
+
+            <div class="demo-container">
+                <div class="demo-column">
+                    <div class="demo-title">📋 До перемешивания</div>
+                    <div class="array-labels">
+                        <div class="array-label">ans[0]</div>
+                        <div class="array-label">ans[1]</div>
+                        <div class="array-label">ans[2]</div>
+                        <div class="array-label">ans[3]</div>
+                    </div>
+                    <div class="array-buttons">
+                        <div class="array-item">rbtn_1</div>
+                        <div class="array-item">rbtn_2</div>
+                        <div class="array-item">rbtn_3</div>
+                        <div class="array-item">rbtn_4</div>
+                    </div>
+                    <div class="status-line">answers = [rbtn_1, rbtn_2, rbtn_3, rbtn_4]</div>
+                </div>
+
+                <div class="demo-column">
+                    <div class="demo-title">🔀 После перемешивания</div>
+                    <div class="array-labels" id="after-labels">
+                        <div class="array-label" id="lbl-0">ans[0]</div>
+                        <div class="array-label" id="lbl-1">ans[1]</div>
+                        <div class="array-label" id="lbl-2">ans[2]</div>
+                        <div class="array-label" id="lbl-3">ans[3]</div>
+                    </div>
+                    <div class="array-buttons" id="shuffled-demo">
+                        <div class="array-item question-mark" id="slot-0">?</div>
+                        <div class="array-item question-mark" id="slot-1">?</div>
+                        <div class="array-item question-mark" id="slot-2">?</div>
+                        <div class="array-item question-mark" id="slot-3">?</div>
+                    </div>
+                    <div class="status-line" id="status-line">answers = [?, ?, ?, ?]</div>
+                </div>
+            </div>
+
+            <button class="shuffle-button" id="shuffle-btn-3" onclick="animateShuffleSlide3()">
+                 Показать перемешивание
+            </button>
+
+            <div class="step" id="shuffle-result-3" style="display: none;">
+                <span class="step-number">✓</span>
+                <strong>Теперь ans[0] — это случайная кнопка!</strong> Запишем туда правильный ответ.
+            </div>
+        </div>
+
+        <!-- Слайд 4: Примеры работы функции -->
+        <div class="slide" id="slide-4">
+            <h1> Как это работает на экране</h1>
+            
+            <div class="solution-box">
+                <p><strong>Важно:</strong> Правильный ответ ВСЕГДА записывается в <code>answers[0]</code>, но после shuffle() <code>answers[0]</code> указывает на случайную кнопку!</p>
+            </div>
+
+            <div class="example-section">
+                <div class="question-text" id="example-question">Вопрос: Сколько будет 2 + 2?</div>
+                
+                <div class="array-labels">
+                    <div class="array-label" id="ex-lbl-0">ans[0]</div>
+                    <div class="array-label" id="ex-lbl-1">ans[1]</div>
+                    <div class="array-label" id="ex-lbl-2">ans[2]</div>
+                    <div class="array-label" id="ex-lbl-3">ans[3]</div>
+                </div>
+                
+                <div class="array-buttons" id="example-buttons">
+                    <div class="array-item" id="ex-btn-0">?</div>
+                    <div class="array-item" id="ex-btn-1">?</div>
+                    <div class="array-item" id="ex-btn-2">?</div>
+                    <div class="array-item" id="ex-btn-3">?</div>
+                </div>
+                <div class="screen-label">↑ Кнопки с ответами (тексты)</div>
+                
+                <div class="arrow-connector">⬇</div>
+                
+                <div class="array-list" id="answers-list">
+                    answers = [rbtn_?, rbtn_?, rbtn_?, rbtn_?]
+                </div>
+                <div class="screen-label">↑ Массив answers после shuffle()</div>
+                
+                <div class="arrow-connector"></div>
+                
+                <div class="physical-buttons" id="physical-buttons">
+                    <div class="physical-btn" id="phys-0"><span>rbtn_1</span></div>
+                    <div class="physical-btn" id="phys-1"><span>rbtn_2</span></div>
+                    <div class="physical-btn" id="phys-2"><span>rbtn_3</span></div>
+                    <div class="physical-btn" id="phys-3"><span>rbtn_4</span></div>
+                </div>
+                <div class="screen-label">↑ Радиокнопки на экране (виджеты)</div>
+                
+                <button class="shuffle-button" onclick="generateNewExample()">
+                    🎲 Следующий вопрос
+                </button>
+            </div>
+
+            <div class="step">
+                <span class="step-number">💡</span>
+                <strong>Смотри:</strong> <code>answers[0]</code> (красная метка) указывает на случайную радиокнопку → туда записывается правильный ответ → на экране он оказывается на случайном месте!
+            </div>
+        </div>
+
+        <!-- Слайд 5: Код -->
+        <div class="slide" id="slide-5">
+            <h1>💻 Код функции ask()</h1>
+            
+            <div class="code-block"><span class="code-keyword">from</span> random <span class="code-keyword">import</span> shuffle
+
+<span class="code-comment"># Создаём массив с кнопками</span>
+<span class="code-variable">answers</span> = [rbtn_1, rbtn_2, rbtn_3, rbtn_4]
+
+<span class="code-keyword">def</span> <span class="code-function">ask</span>(question, right_answer, wrong1, wrong2, wrong3):
+    <span class="code-string">'''Функция записывает вопрос и ответы в виджеты,
+    при этом варианты ответов распределяются случайным образом'''</span>
+    
+    shuffle(answers)
+    
+    answers[<span class="code-string">0</span>].setText(right_answer)
+    answers[<span class="code-string">1</span>].setText(wrong1)
+    answers[<span class="code-string">2</span>].setText(wrong2)
+    answers[<span class="code-string">3</span>].setText(wrong3)
+    
+    text.setText(question)</div>
+        </div>
+
+        <!-- Слайд 6: Итоги -->
+        <div class="slide" id="slide-6">
+            <h1>🎉 Итоги</h1>
+            
+            <div class="comparison-grid">
+                <div class="problem-box">
+                    <h2>❌ Без перемешивания</h2>
+                    <ul>
+                        <li>Правильный ответ всегда на одном месте</li>
+                        <li>Ученик запоминает позицию</li>
+                        <li>Не нужно читать вопросы</li>
+                        <li>Тест не проверяет знания</li>
+                    </ul>
+                </div>
+                
+                <div class="solution-box">
+                    <h2>✅ С перемешиванием</h2>
+                    <ul>
+                        <li>Правильный ответ на случайном месте</li>
+                        <li>Нельзя угадать по позиции</li>
+                        <li>Нужно читать и думать</li>
+                        <li>Тест проверяет знания</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="content-box" style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h2 style="color: white;">🎯 Главный вывод:</h2>
+                <p style="font-size: 1.05em;">
+                    <strong>Перемешивание</strong> заставляет ученика читать вопросы и думать, а не нажимать одну кнопку!
+                </p>
+            </div>
+        </div>
+
+        <!-- Навигация -->
+        <div class="navigation">
+            <button class="nav-btn" id="prev-btn" onclick="changeSlide(-1)">← Назад</button>
+            <button class="nav-btn" id="next-btn" onclick="changeSlide(1)">Вперёд →</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 6;
+        let isAnimating3 = false;
+
+        function updateSlide() {
+            document.querySelectorAll('.slide').forEach(slide => {
+                slide.classList.remove('active');
+            });
+            document.getElementById(`slide-${currentSlide}`).classList.add('active');
+            document.getElementById('current-slide').textContent = currentSlide;
+            document.getElementById('prev-btn').disabled = currentSlide === 1;
+            document.getElementById('next-btn').disabled = currentSlide === totalSlides;
+        }
+
+        function changeSlide(direction) {
+            currentSlide += direction;
+            if (currentSlide < 1) currentSlide = 1;
+            if (currentSlide > totalSlides) currentSlide = totalSlides;
+            updateSlide();
+        }
+
+        function resetSlide3() {
+            for (let i = 0; i < 4; i++) {
+                const slot = document.getElementById(`slot-${i}`);
+                slot.className = 'array-item question-mark';
+                slot.textContent = '?';
+                document.getElementById(`lbl-${i}`).classList.remove('active-label');
+            }
+            document.getElementById('status-line').textContent = 'answers = [?, ?, ?, ?]';
+            document.getElementById('shuffle-result-3').style.display = 'none';
+        }
+
+        function animateShuffleSlide3() {
+            if (isAnimating3) return;
+            isAnimating3 = true;
+
+            const btn = document.getElementById('shuffle-btn-3');
+            btn.textContent = '⏳ Перемешиваем...';
+
+            resetSlide3();
+
+            const buttons = ['rbtn_1', 'rbtn_2', 'rbtn_3', 'rbtn_4'];
+            
+            for (let i = buttons.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [buttons[i], buttons[j]] = [buttons[j], buttons[i]];
+            }
+
+            let step = 0;
+            const interval = setInterval(() => {
+                if (step < 4) {
+                    if (step > 0) {
+                        document.getElementById(`lbl-${step - 1}`).classList.remove('active-label');
+                    }
+                    
+                    document.getElementById(`lbl-${step}`).classList.add('active-label');
+                    
+                    const slot = document.getElementById(`slot-${step}`);
+                    slot.classList.remove('question-mark');
+                    slot.classList.add('highlight');
+                    slot.textContent = buttons[step];
+                    
+                    const statusParts = [];
+                    for (let k = 0; k < 4; k++) {
+                        if (k < step) {
+                            statusParts.push(buttons[k]);
+                        } else if (k === step) {
+                            statusParts.push(`▶${buttons[k]}`);
+                        } else {
+                            statusParts.push('?');
+                        }
+                    }
+                    document.getElementById('status-line').textContent = 
+                        `answers = [${statusParts.join(', ')}]`;
+                    
+                    step++;
+                } else {
+                    clearInterval(interval);
+                    
+                    setTimeout(() => {
+                        for (let i = 0; i < 4; i++) {
+                            document.getElementById(`lbl-${i}`).classList.remove('active-label');
+                            const slot = document.getElementById(`slot-${i}`);
+                            slot.classList.remove('highlight');
+                            if (i === 0) {
+                                slot.classList.add('correct');
+                            }
+                        }
+                        document.getElementById('status-line').textContent = 
+                            `answers = [${buttons.join(', ')}]  ← ans[0] — случайная кнопка!`;
+                        document.getElementById('shuffle-result-3').style.display = 'block';
+                        btn.textContent = '🔀 Перемешать ещё раз';
+                        isAnimating3 = false;
+                    }, 400);
+                }
+            }, 700);
+        }
+
+        const examples = [
+            { question: 'Вопрос: Сколько будет 2 + 2?', rightAnswer: '4', wrongAnswers: ['3', '5', '6'] },
+            { question: 'Вопрос: Сколько будет 3 × 3?', rightAnswer: '9', wrongAnswers: ['8', '6', '12'] },
+            { question: 'Вопрос: Сколько будет 10 - 4?', rightAnswer: '6', wrongAnswers: ['5', '7', '8'] },
+            { question: 'Вопрос: Сколько будет 15 ÷ 3?', rightAnswer: '5', wrongAnswers: ['3', '6', '4'] }
+        ];
+
+        function generateNewExample() {
+            const exampleIndex = Math.floor(Math.random() * examples.length);
+            const example = examples[exampleIndex];
+            
+            const buttons = ['rbtn_1', 'rbtn_2', 'rbtn_3', 'rbtn_4'];
+            for (let i = buttons.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [buttons[i], buttons[j]] = [buttons[j], buttons[i]];
+            }
+            
+            document.getElementById('example-question').textContent = example.question;
+            
+            const answerValues = [example.rightAnswer, ...example.wrongAnswers];
+            
+            for (let i = 0; i < 4; i++) {
+                const label = document.getElementById(`ex-lbl-${i}`);
+                label.textContent = `ans[${i}]`;
+                label.className = 'array-label';
+                if (i === 0) label.classList.add('active-label');
+                
+                const btn = document.getElementById(`ex-btn-${i}`);
+                btn.textContent = answerValues[i];
+                btn.className = 'array-item';
+                if (i === 0) btn.classList.add('correct');
+                else btn.classList.add('wrong');
+            }
+            
+            document.getElementById('answers-list').textContent = 
+                `answers = [${buttons.join(', ')}]`;
+            
+            for (let i = 0; i < 4; i++) {
+                const physBtn = document.getElementById(`phys-${i}`);
+                physBtn.className = 'physical-btn';
+                if (buttons[0] === `rbtn_${i + 1}`) {
+                    physBtn.classList.add('active-phys');
+                }
+            }
+        }
+
+        generateNewExample();
+        updateSlide();
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        });
+    </script>
+</body>
+</html>
